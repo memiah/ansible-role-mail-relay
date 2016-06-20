@@ -1,0 +1,14 @@
+---
+postfix_relay_enabled: True
+
+postfix_relay_server: ""
+
+postfix_relay_port: 587
+
+postfix_mydomain: ""
+
+postfix_relay_user: ""
+
+postfix_relay_secret_key: ""
+
+postfix_relay_password: ""

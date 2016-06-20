@@ -1,0 +1,27 @@
+---
+
+- name: update main.cf mydomain value
+  lineinfile:
+    dest: /etc/postfix/main.cf
+    regexp: '^(mydomain =).*$'
+    line: 'mydomain = {{ postfix_mydomain }}'
+    insertafter: '^#mydomain ='
+  notify:
+    - restart postfix
+
+- block:
+
+  - name: determine SMTP password
+    local_action: shell {{ role_path }}/scripts/aws-ses-smtp-password.sh {{ aws_cli_secret_key }}
+    become: no
+    register: aws_ses_smtp_password
+    when: postfix_relay_secret_key != '' and postfix_relay_password == ''
+    changed_when: False
+
+  - name: set postfix relay password
+    set_fact: postfix_relay_password={{ aws_ses_smtp_password.stdout }}
+    when: postfix_relay_secret_key != '' and postfix_relay_password == ''
+
+  - include: postfix.yml
+
+  when: postfix_relay_enabled == True

@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: memiah
+  description: Configure postfix SMTP relay.
+  company: "Memiah Limited"
+  license: "license (BSD, MIT)"
+  min_ansible_version: 2.1
+  platforms:
+  - name: EL
+    versions:
+    - all
+  galaxy_tags:
+    - postfix
+    - amazon
+    - ses
+    - mail
+    - relay
+dependencies: []

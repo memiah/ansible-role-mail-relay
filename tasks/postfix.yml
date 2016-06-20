@@ -1,0 +1,66 @@
+---
+- name: install cyrus-sasl-plain package
+  package: name=cyrus-sasl-plain
+
+- name: update main.cf relayhost
+  lineinfile:
+    dest: /etc/postfix/main.cf
+    regexp: '^(relayhost =).*$'
+    line: 'relayhost = [{{ postfix_relay_server }}]:{{ postfix_relay_port }}'
+    insertafter: '^#relayhost ='
+  notify:
+    - restart postfix
+
+- name: append smtp values to main.cf
+  lineinfile:
+    dest: /etc/postfix/main.cf
+    line: "{{ item }}"
+    insertafter: '^relayhost ='
+  with_items:
+    - smtp_sasl_auth_enable = yes
+    - smtp_sasl_security_options = noanonymous
+    - smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+    - smtp_use_tls = yes
+    - smtp_tls_security_level = encrypt
+    - smtp_tls_note_starttls_offer = yes
+  notify:
+    - restart postfix
+
+- name: comment out smtp_fallback_relay setting
+  replace:
+    dest: /etc/postfix/master.cf
+    regexp: '^(  -o smtp_fallback_relay=.*)$'
+    replace: '#\1'
+  notify:
+    - restart postfix
+
+- name: write credentials to /etc/postfix/sasl_passwd
+  copy:
+    dest: /etc/postfix/sasl_passwd
+    content: '[{{ postfix_relay_server }}]:{{ postfix_relay_port }} {{ postfix_relay_user }}:{{ postfix_relay_password }}'
+  register: postfix_passwd_add
+  notify:
+    - restart postfix
+
+- name: create hashmap database file containing SMTP credentials
+  command: postmap hash:/etc/postfix/sasl_passwd
+  when: postfix_passwd_add.changed
+  register: postfix_hashmap_database
+
+- name: change file permissions
+  file: path=/etc/postfix/{{ item }} owner=root group=root mode=0600
+  with_items:
+    - sasl_passwd
+    - sasl_passwd.db
+  when: postfix_hashmap_database.changed
+
+- name: lookup current postfix CA certificate value
+  command: postconf -h 'smtp_tls_CAfile'
+  register: postconf_smtp_tls_cafile
+  changed_when: postconf_smtp_tls_cafile.stdout != "/etc/ssl/certs/ca-bundle.crt"
+
+- name: tell Postfix where to find the CA certificate
+  command: postconf -e 'smtp_tls_CAfile=/etc/ssl/certs/ca-bundle.crt'
+  when: postconf_smtp_tls_cafile.changed
+  notify:
+    - restart postfix
