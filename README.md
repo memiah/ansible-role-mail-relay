@@ -1,7 +1,7 @@
-Role Name
-=========
+Postfix Mail Relay
+==================
 
-Setup postfix to send via mail relay, for example Amazon SES.
+Setup postfix to send via a mail relay, for example Amazon SES.
 
 Requirements
 ------------
@@ -30,32 +30,31 @@ Available variables are listed below, along with default values (see
 `defaults/main.yml`):
 
     postfix_relay_enabled: True
-   
+
 By default, the postfix configuration is enabled, so skip set to `False`. 
-    
+
     postfix_relay_server: ""
 
 Postfix relay server hostname, e.g. "email-smtp.region.amazonaws.com".
 
     postfix_relay_port: 587
-    
+
 Postfix relay server port.
-    
+
     postfix_mydomain: ""    
-    
+
 Postfix `mydomain` value.
 
     postfix_relay_user: ""
-    
+
 Set postfix relay user.
-    
-    
+
     postfix_relay_password: ""
-    
+
 Set the relay server password.
 
     postfix_relay_secret_key: "secret-key-here"
-    
+
 Generate the relay password from specified AWS Secret Key. Or, manually populate 
 the `postfix_relay_password` value by converting an existing AWS Secret Key to 
 an Amazon SES SMTP password using the included bash script:
@@ -77,7 +76,7 @@ Including an example of how to use your role (for instance, with variables passe
       vars_files:
         - vars/main.yml
       roles:
-        - memiah.aws-cli
+        - memiah.mail-relay
 
 *Inside `vars/main.yml`*:
 
