@@ -6,13 +6,14 @@
     regexp: '^(mydomain =).*$'
     line: 'mydomain = {{ postfix_mydomain }}'
     insertafter: '^#mydomain ='
+  when: postfix_mydomain != ''
   notify:
     - restart postfix
 
 - block:
 
   - name: determine SMTP password
-    local_action: shell {{ role_path }}/scripts/aws-ses-smtp-password.sh {{ aws_cli_secret_key }}
+    local_action: shell {{ role_path }}/scripts/aws-ses-smtp-password.sh {{ postfix_relay_secret_key }}
     become: no
     register: aws_ses_smtp_password
     when: postfix_relay_secret_key != '' and postfix_relay_password == ''
