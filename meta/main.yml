@@ -15,4 +15,5 @@ galaxy_info:
     - ses
     - mail
     - relay
-dependencies: []
+dependencies:
+  - geerlingguy.postfix
