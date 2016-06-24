@@ -22,7 +22,7 @@ install:
   - printf '[defaults]\nroles_path=../' >ansible.cfg
 
   # Install required dependencies.
-  - ansible-galaxy install geeringguy.postfix
+  - ansible-galaxy install geerlingguy.postfix
 
 script:
   # Basic role syntax check
