@@ -5,7 +5,11 @@ postfix_relay_server: ""
 
 postfix_relay_port: 587
 
-postfix_mydomain: ""
+postfix_myhostname: False
+
+postfix_mydomain: False
+
+postfix_myorigin: False
 
 postfix_relay_user: ""
 

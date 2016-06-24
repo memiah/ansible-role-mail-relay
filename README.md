@@ -41,9 +41,32 @@ Postfix relay server hostname, e.g. "email-smtp.region.amazonaws.com".
 
 Postfix relay server port.
 
-    postfix_mydomain: ""    
+    postfix_myhostname: False
 
-Postfix `mydomain` value.
+The myhostname parameter specifies the internet hostname of this
+mail system. The default is to use the fully-qualified domain name
+from gethostname(). $myhostname is used as a default value for many
+other configuration parameters.
+
+    postfix_mydomain: False
+
+The mydomain parameter specifies the local internet domain name.
+The default is to use $myhostname minus the first component.
+$mydomain is used as a default value for many other configuration
+parameters.
+
+    postfix_myorigin: False
+
+The myorigin parameter specifies the domain that locally-posted
+mail appears to come from. The default is to append $myhostname,
+which is fine for small sites.  If you run a domain with multiple
+machines, you should (1) change this to $mydomain and (2) set up
+a domain-wide alias database that aliases each user to
+user@that.users.mailhost.
+
+For the sake of consistency between sender and recipient addresses,
+myorigin also specifies the default domain name that is appended
+to recipient addresses that have no @domain part.
 
     postfix_relay_user: ""
 

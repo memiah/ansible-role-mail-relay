@@ -1,15 +1,17 @@
 ---
-
-- name: update main.cf mydomain value
+- name: update main.cf values
   lineinfile:
     dest: /etc/postfix/main.cf
-    regexp: '^(mydomain =).*$'
-    line: 'mydomain = {{ postfix_mydomain }}'
-    insertafter: '^#mydomain ='
-  when: postfix_mydomain != ''
+    regexp: '^({{ item.name }} =).*$'
+    line: '{{ item.name }} = {{ item.value }}'
+    insertafter: '^#{{ item.name }} ='
+  when: item.value != False
+  with_items:
+    - { name: 'myhostname', value: '{{ postfix_myhostname }}' }
+    - { name: 'mydomain', value: '{{ postfix_mydomain }}' }
+    - { name: 'myorigin', value: '{{ postfix_myorigin }}' }
   notify:
     - restart postfix
-
 - block:
 
   - name: determine SMTP password
