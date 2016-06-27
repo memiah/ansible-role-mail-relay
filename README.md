@@ -68,6 +68,14 @@ For the sake of consistency between sender and recipient addresses,
 myorigin also specifies the default domain name that is appended
 to recipient addresses that have no @domain part.
 
+    postfix_virtual_alias_maps:
+       - address: root
+         alias: root@localhost
+
+Deliver mail to local accounts by setting up virtual aliases. By default, any
+mail to `root` will be sent to `root@localhost` (delivered locally). Disable
+all default aliases by setting this value to `False`.
+
     postfix_relay_user: ""
 
 Set postfix relay user.

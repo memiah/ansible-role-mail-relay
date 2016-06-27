@@ -11,6 +11,10 @@ postfix_mydomain: False
 
 postfix_myorigin: False
 
+postfix_virtual_alias_maps:
+   - address: root
+     alias: root@localhost
+
 postfix_relay_user: ""
 
 postfix_relay_secret_key: ""

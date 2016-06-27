@@ -64,3 +64,34 @@
   when: postconf_smtp_tls_cafile.changed
   notify:
     - restart postfix
+
+- block:
+
+  - name: insert virtual_alias_maps option into /etc/postfix/main.cf
+    blockinfile:
+      dest: /etc/postfix/main.cf
+      block: |
+        # Optional lookup tables that alias specific mail addresses or domains
+        # to other local or remote address.
+        #
+        virtual_alias_maps = hash:/etc/postfix/virtual
+      marker: "# {mark} ANSIBLE MANAGED BLOCK (virtual_alias_maps)"
+    notify:
+      - restart postfix
+
+  - name: add address aliases to /etc/postfix/virtual
+    blockinfile:
+      dest: /etc/postfix/virtual
+      block: |
+        {{ item.address }} {{ item.alias }}
+      marker: "# {mark} ANSIBLE MANAGED BLOCK ({{ item.address }})"
+    with_items: '{{ postfix_virtual_alias_maps }}'
+    register: postfix_virtual_alias_maps_update
+    notify:
+      - restart postfix
+
+  - name: run postmap command for virtual aliases
+    command: postmap /etc/postfix/virtual
+    when: postfix_virtual_alias_maps_update.changed
+
+  when: postfix_virtual_alias_maps and postfix_virtual_alias_maps|length > 0
