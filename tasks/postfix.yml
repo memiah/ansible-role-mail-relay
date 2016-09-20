@@ -57,6 +57,7 @@
       line: "{{ item.name }} = {{ item.value }}"
       regexp: "^{{ item.name }} ="
       insertafter: '^relayhost ='
+      state: present
     with_items:
       - { name: "sender_dependent_relayhost_maps", value: "hash:/etc/postfix/relayhost_map" }
       - { name: "smtp_sender_dependent_authentication", value: "yes" }
@@ -66,19 +67,21 @@
   - name: add each relayhost map to sasl_passwd file
     lineinfile:
       dest: /etc/postfix/sasl_passwd
-      state: present
       line: "{{ item.domain }} {{ item.user | default(postfix_relay_user) }}:{{ item.password | default(postfix_relay_password) }}"
+      regexp: "^{{ item.domain }} "
       insertbefore: "^\\[{{ postfix_relay_server }}\\]"
+      state: present
     with_items: "{{ postfix_relayhost_maps }}"
+    register: postfix_relayhost_sasl_add
     notify:
       - restart postfix
 
   - name: add each relayhost map to relayhost_map file
     lineinfile:
       dest: /etc/postfix/relayhost_map
-      state: present
       line: "{{ item.domain }} [{{ item.server | default(postfix_relay_server) }}]:{{ item.port | default(postfix_relay_port) }}"
       regexp: "^{{ item.domain }} "
+      state: present
       create: yes
       owner: root
       group: root
@@ -94,7 +97,7 @@
 
 - name: create hashmap database file containing SMTP credentials
   command: postmap hash:/etc/postfix/sasl_passwd
-  when: postfix_passwd_add.changed
+  when: postfix_passwd_add.changed or postfix_relayhost_sasl_add.changed
   register: postfix_hashmap_database
 
 - name: lookup current postfix CA certificate value
