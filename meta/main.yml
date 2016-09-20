@@ -16,4 +16,4 @@ galaxy_info:
     - mail
     - relay
 dependencies:
-  - geerlingguy.postfix
+  - role: geerlingguy.postfix

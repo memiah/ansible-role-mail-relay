@@ -76,6 +76,18 @@ Deliver mail to local accounts by setting up virtual aliases. By default, any
 mail to `root` will be sent to `root@localhost` (delivered locally). Disable
 all default aliases by setting this value to `False`.
 
+    postfix_relayhost_maps: []
+    #    - domain: "@domain.com" (Required)
+    #      server: "" (Optional, defaults to postfix_relay_server)
+    #      port: 587 (Optional, defaults to postfix_relay_port)
+    #      user: "user-here" (Optional, defaults to postfix_relay_user)
+    #      password: "password-here" (Optional, defaults to postfix_relay_password)
+
+Enables `smtp_sender_dependent_authentication` to allow mail to be relayed through
+multiple hosts with different credentials, depending on the sender email address.
+Note that the domain value can be specified as a full address `user@domain.com` or
+wildcard using `@domain.com`. (See postfix relayhost_map documentation.)
+
     postfix_relay_user: ""
 
 Set postfix relay user.

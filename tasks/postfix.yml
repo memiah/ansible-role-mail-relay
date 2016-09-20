@@ -14,15 +14,16 @@
 - name: append smtp values to main.cf
   lineinfile:
     dest: /etc/postfix/main.cf
-    line: "{{ item }}"
+    line: "{{ item.name }} = {{ item.value }}"
+    regexp: "^{{ item.name }} ="
     insertafter: '^relayhost ='
   with_items:
-    - smtp_sasl_auth_enable = yes
-    - smtp_sasl_security_options = noanonymous
-    - smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
-    - smtp_use_tls = yes
-    - smtp_tls_security_level = encrypt
-    - smtp_tls_note_starttls_offer = yes
+    - { name: "smtp_sasl_auth_enable", value: "yes" }
+    - { name: "smtp_sasl_security_options", value: "noanonymous" }
+    - { name: "smtp_sasl_password_maps", value: "hash:/etc/postfix/sasl_passwd" }
+    - { name: "smtp_use_tls", value: "yes" }
+    - { name: "smtp_tls_security_level", value: "encrypt" }
+    - { name: "smtp_tls_note_starttls_offer", value: "yes" }
   notify:
     - restart postfix
 
@@ -34,25 +35,67 @@
   notify:
     - restart postfix
 
-- name: write credentials to /etc/postfix/sasl_passwd
-  copy:
+- name: write default credentials to /etc/postfix/sasl_passwd
+  lineinfile:
     dest: /etc/postfix/sasl_passwd
-    content: '[{{ postfix_relay_server }}]:{{ postfix_relay_port }} {{ postfix_relay_user }}:{{ postfix_relay_password }}'
+    line: "[{{ postfix_relay_server }}]:{{ postfix_relay_port }} {{ postfix_relay_user }}:{{ postfix_relay_password }}"
+    regexp: "^\\[{{ postfix_relay_server }}\\]:{{ postfix_relay_port }}"
+    state: present
+    create: yes
+    owner: root
+    group: root
+    mode: 0600
   register: postfix_passwd_add
   notify:
     - restart postfix
+
+- block:
+
+  - name: append relayhost_map values to main.cf
+    lineinfile:
+      dest: /etc/postfix/main.cf
+      line: "{{ item.name }} = {{ item.value }}"
+      regexp: "^{{ item.name }} ="
+      insertafter: '^relayhost ='
+    with_items:
+      - { name: "sender_dependent_relayhost_maps", value: "hash:/etc/postfix/relayhost_map" }
+      - { name: "smtp_sender_dependent_authentication", value: "yes" }
+    notify:
+      - restart postfix
+
+  - name: add each relayhost map to sasl_passwd file
+    lineinfile:
+      dest: /etc/postfix/sasl_passwd
+      state: present
+      line: "{{ item.domain }} {{ item.user | default(postfix_relay_user) }}:{{ item.password | default(postfix_relay_password) }}"
+      insertbefore: "^\\[{{ postfix_relay_server }}\\]"
+    with_items: "{{ postfix_relayhost_maps }}"
+    notify:
+      - restart postfix
+
+  - name: add each relayhost map to relayhost_map file
+    lineinfile:
+      dest: /etc/postfix/relayhost_map
+      state: present
+      line: "{{ item.domain }} [{{ item.server | default(postfix_relay_server) }}]:{{ item.port | default(postfix_relay_port) }}"
+      regexp: "^{{ item.domain }} "
+      create: yes
+      owner: root
+      group: root
+      mode: 0600
+    with_items: "{{ postfix_relayhost_maps }}"
+    register: postfix_relayhost_maps_update
+
+  - name: run postmap command for virtual aliases
+    command: postmap /etc/postfix/relayhost_map
+    when: postfix_relayhost_maps_update.changed
+
+  when: postfix_relayhost_maps and postfix_relayhost_maps|length > 0
 
 - name: create hashmap database file containing SMTP credentials
   command: postmap hash:/etc/postfix/sasl_passwd
   when: postfix_passwd_add.changed
   register: postfix_hashmap_database
-
-- name: change file permissions
-  file: path=/etc/postfix/{{ item }} owner=root group=root mode=0600
-  with_items:
-    - sasl_passwd
-    - sasl_passwd.db
-  when: postfix_hashmap_database.changed
 
 - name: lookup current postfix CA certificate value
   command: postconf -h 'smtp_tls_CAfile'
