@@ -68,6 +68,34 @@ For the sake of consistency between sender and recipient addresses,
 myorigin also specifies the default domain name that is appended
 to recipient addresses that have no @domain part.
 
+    postfix_relay_recipient_canonical_maps: regexp:/etc/postfix/recipient_canonical_maps
+
+Address mapping lookup table for envelope and header recipient addresses using
+[recipient_canonical_maps](http://www.postfix.org/postconf.5.html#recipient_canonical_maps).
+By default this uses the [regexp table](http://www.postfix.org/regexp_table.5.html) type.
+
+    postfix_relay_recipient_canonical: []
+    #    - pattern: "/./" (Required)
+    #      address: "redirect@email.domain" (Required)
+    
+List of canonical recipients based on the regular expression tables format.
+
+    postfix_relay_recipient_canonical_classes: envelope_recipient
+
+Addresses subject to canonical_maps address mapping. Specify one or more of: 
+`envelope_sender`, `envelope_recipient`, `header_sender`, `header_recipient`.
+
+    postfix_relay_catch_all_address: False
+    # postfix_relay_catch_all_address: redirect@email.domain
+    
+Email address to redirect all email. By default this is disabled and should
+generally only be enabled in development environments. If specified this will
+overwrite all `postfix_relay_recipient_canonical` items.
+
+    postfix_relay_catch_all_pattern: /./
+
+Default (regexp) pattern used to trap all emails and send to the catch all address.
+
     postfix_virtual_alias_maps:
        - address: root
          alias: root@localhost

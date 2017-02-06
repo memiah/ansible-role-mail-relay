@@ -1,0 +1,40 @@
+---
+- name: Overwrite recipient canonical list with catch all item
+  set_fact:
+    postfix_relay_recipient_canonical:
+      - pattern: '{{ postfix_relay_catch_all_pattern }}'
+        address: '{{ postfix_relay_catch_all_address }}'
+  when: postfix_relay_catch_all_address != False
+
+- name: write recipient maps to /etc/postfix/recipient_canonical_maps
+  blockinfile:
+    dest: /etc/postfix/recipient_canonical_maps
+    block: |
+      {% for item in postfix_relay_recipient_canonical %}
+      {{ item.pattern }} {{ item.address }}
+      {% endfor %}
+    create: yes
+  when: postfix_relay_recipient_canonical|length > 0
+  notify:
+    - restart postfix
+
+- name: Remove /etc/postfix/recipient_canonical_maps file if no recipient canonical items
+  file:
+    path: /etc/postfix/recipient_canonical_maps
+    state: absent
+  when: postfix_relay_recipient_canonical|length == 0
+
+- name: modify recipient canonical values in main.cf
+  lineinfile:
+    dest: /etc/postfix/main.cf
+    line: "{{ item.name }} = {{ item.value }}"
+    regexp: "^{{ item.name }} ="
+    state: "{{ 'present' if postfix_relay_recipient_canonical|length else 'absent' }}"
+    insertbefore: "# ADDRESS EXTENSIONS"
+  with_items:
+    - name: "recipient_canonical_classes"
+      value: "{{ postfix_relay_recipient_canonical_classes }}"
+    - name: "recipient_canonical_maps"
+      value: "{{ postfix_relay_recipient_canonical_maps }}"
+  notify:
+    - restart postfix

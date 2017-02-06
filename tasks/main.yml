@@ -12,19 +12,8 @@
     - { name: 'myorigin', value: '{{ postfix_myorigin }}' }
   notify:
     - restart postfix
-- block:
 
-  - name: determine SMTP password
-    local_action: shell {{ role_path }}/scripts/aws-ses-smtp-password.sh {{ postfix_relay_secret_key }}
-    become: no
-    register: aws_ses_smtp_password
-    when: postfix_relay_secret_key != '' and postfix_relay_password == ''
-    changed_when: False
-
-  - name: set postfix relay password
-    set_fact: postfix_relay_password={{ aws_ses_smtp_password.stdout }}
-    when: postfix_relay_secret_key != '' and postfix_relay_password == ''
-
-  - include: postfix.yml
-
+- include: relayhost.yml
   when: postfix_relay_enabled == True
+
+- include: recipient-canonical.yml

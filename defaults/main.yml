@@ -11,6 +11,16 @@ postfix_mydomain: False
 
 postfix_myorigin: False
 
+postfix_relay_recipient_canonical_maps: regexp:/etc/postfix/recipient_canonical_maps
+
+postfix_relay_recipient_canonical: []
+
+postfix_relay_recipient_canonical_classes: envelope_recipient
+
+postfix_relay_catch_all_address: False
+
+postfix_relay_catch_all_pattern: /./
+
 postfix_virtual_alias_maps:
    - address: root
      alias: root@localhost
